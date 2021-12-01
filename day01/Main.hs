@@ -9,30 +9,28 @@ main = do
     putStrLn $ "part 1: " ++ (solvePart1 $ head args)
     putStrLn $ "part 2: " ++ (solvePart2 $ head args)
 
-linesToNumbers :: String -> [Integer]
-linesToNumbers = map readInt . lines
+linesToNumbers :: String -> [Int]
+linesToNumbers = map read . lines
 
-toPairs :: [Integer] -> [(Integer, Integer)]
+toPairs :: [Int] -> [(Int, Int)]
 toPairs x = zip x (drop 1 x)
 
-increase :: (Integer, Integer) -> Integer -> Integer
-increase (x,y) acc = if y > x then acc + 1 else acc
+numIncreases :: [(Int, Int)] -> Int
+numIncreases = length . filter (\(x,y) -> y > x)
 
 solvePart1 :: String -> String
-solvePart1 input = 
-    let numbers = linesToNumbers input
-        pairs = toPairs numbers
-        numIncreases = foldr increase 0 pairs
-        in show numIncreases
+solvePart1 input = show
+                   . numIncreases
+                   . toPairs $ linesToNumbers input 
+
+toTriplets :: [Int] -> [[Int]]
+toTriplets [] = []
+toTriplets [_] = []
+toTriplets [_,_] = []
+toTriplets (a:b:c:xs) = [[a,b,c]] ++ (toTriplets (b:c:xs))
 
 solvePart2 :: String -> String
-solvePart2 input =
-    let numbers = map readInt $ lines input
-        triplets = zip (zip numbers (drop 1 numbers)) (drop 2 numbers)
-        windows = map (\((x,y),z) -> x+y+z) triplets
-        windowPairs = zip windows (drop 1 windows)
-        numIncreases = foldr increase 0 windowPairs
-        in show numIncreases
+solvePart2 input = show
+                   . numIncreases
+                   . toPairs $ map sum (toTriplets $ linesToNumbers input)
 
-readInt :: String -> Integer
-readInt = read
