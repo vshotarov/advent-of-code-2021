@@ -27,9 +27,9 @@ which will:
 
 After, that to solve any day, use `cabal run` like so:
 
-`cabal run day{day_num} {input_file}` 
+<code>cabal run day{day_num} "\`cat {input_file}\`"</code>
 
 e.g.
 
-`cabal run day03 day03/example_input.txt`
+<code>cabal run day03 "\`cat day03/example_input.txt\`"</code>
 
