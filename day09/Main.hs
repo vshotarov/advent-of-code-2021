@@ -29,10 +29,6 @@ findLowest heightmap lows (x,y) =
      in if x == (width-1)
            then (if y == height-1 then lows else findLowest heightmap newLows (0,y+1))
         else findLowest heightmap newLows (x+1,y)
-                             
-isIn :: (Int,Int) -> [(Int,Int)] -> Bool
-isIn _ [] = False
-isIn needle (x:stack) = if x == needle then True else isIn needle stack
 
 -- BFS
 findBasin :: [[Int]] -> [(Int,Int)] -> [(Int,Int)] -> [(Int,Int)]
@@ -42,8 +38,8 @@ findBasin heightmap visited ((x,y):toExplore) =
         height = length heightmap
         thisNeighbours = neighbours x y width height
         validNeighbours = filter (\(nx,ny) -> ((heightmap !! ny) !! nx) /= 9) thisNeighbours
-        unvisitedNeighbours = filter (\n -> not $ isIn n visited) validNeighbours
-     in if isIn (x,y) visited
+        unvisitedNeighbours = filter (\n -> not $ n `elem` visited) validNeighbours
+     in if (x,y) `elem` visited
            then findBasin heightmap visited toExplore
         else findBasin heightmap ([(x,y)]++visited) (toExplore++unvisitedNeighbours)
 

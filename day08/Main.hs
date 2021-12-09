@@ -59,17 +59,17 @@ solveOne :: String -> String
 solveOne line = let cf = head $ filter (\x -> length x == 2) $ words line
                     acf = head $ filter (\x -> length x == 3) $ words line
                     bcdf = head $ filter (\x -> length x == 4) $ words line
-                    a = head $ filter (\x -> not $ isIn x bcdf) acf
+                    a = head $ filter (\x -> not $ x `elem` bcdf) acf
                     fives = filter (\x -> length x == 5) $ words line
                     be = findLeastCommonChars fives
-                    e = head $ filter (\x -> not $ isIn x bcdf) be
+                    e = head $ filter (\x -> not $ x `elem` bcdf) be
                     b = head $ filter (\x -> x /= e) be
-                    d = head $ filter (\x -> not $ isIn x ([b] ++ cf)) bcdf
+                    d = head $ filter (\x -> not $ x `elem` ([b] ++ cf)) bcdf
                     sixes = filter (\x -> length x == 6) $ words line
                     dce = findLeastCommonChars sixes
-                    c = head $ filter (\x -> not $ isIn x [d,e]) dce
+                    c = head $ filter (\x -> not $ x `elem` [d,e]) dce
                     f = head $ filter (\x -> x /= c) cf
-                    g = head $ filter (\x -> not $ isIn x [a,b,c,d,e,f]) "abcdefg"
+                    g = head $ filter (\x -> not $ x `elem` [a,b,c,d,e,f]) "abcdefg"
                  in [a,b,c,d,e,f,g]
 
 solvePart2 :: String -> String
