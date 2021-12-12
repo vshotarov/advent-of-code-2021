@@ -9,41 +9,41 @@ import Data.Char
 main :: IO ()
 main = do
     args <- getArgs
-    putStrLn $ solvePart1 $ head args
+    putStrLn $ solve $ head args
 
-safeLookup :: String -> Map.Map String [String] -> [String]
-safeLookup x y = case Map.lookup x y of
-                   Nothing -> []
-                   Just something -> something
+data Node = Start | End | Lower String | Upper String
+    deriving (Eq, Ord, Show)
+type Graph = Map.Map Node [Node]
+type Path = [Node]
 
-buildPaths :: [String] -> Map.Map String [String] -> String -> [[String]]
-buildPaths [] _ _ = error "No path"
-buildPaths ("start":x) _ _ = [("start":x)]
-buildPaths (node:path) caveMap doubleNode =
-    let neighbours = safeLookup node caveMap
-        validNeighbours = filter (\x -> if x == map toLower x
-                                            then (if x /= doubleNode
-                                                     then not $ x `elem` path
-                                                   else length (filter (\y -> y==x) path) < 2)
-                                        else True) neighbours
-        neighbourPaths = map (\x -> buildPaths (x:node:path) caveMap doubleNode) validNeighbours
-     in concat neighbourPaths
+node :: String -> Node
+node x | x == "start" = Start
+       | x == "end" = End
+       | x == map toLower x = Lower x
+       | otherwise = Upper x
 
-solvePart1 :: String -> String
-solvePart1 input = let inputLines = lines input
-                       connections = map (\x -> let [src, dst] = splitOn "-" x
-                                                 in (src,dst)) inputLines
-                       caves = Set.toList $ Set.union (Set.fromList $ map fst connections)
-                                                      (Set.fromList $ map snd connections)
-                       incoming = map (\x -> map fst $ filter (\(s,d) -> d == x) connections)
-                                      caves
-                       outgoing = map (\x -> map snd $ filter (\(d,s) -> d == x) connections)
-                                      caves
-                       caveMap = Map.fromList $ zip caves $ zipWith (++) incoming outgoing
-                       paths1 = buildPaths ["end"] caveMap ""
-                       paths2 = concat $ map (\x -> if not $ x `elem` ["start","end"]
-                                                       then buildPaths ["end"] caveMap x
-                                                    else []) caves
-                       part2 = length $ Set.toList $ Set.fromList $ paths2 ++ paths1
-                    in "Part 1: " ++ show (length paths1) ++ "\nPart 2: " ++ show part2
+buildPaths :: Node -> Path -> Graph -> Bool -> [Path]
+buildPaths End path _ _ = [path]
+buildPaths cave path caveMap pt2 =
+    let go Start = []
+        go End = [End:path]
+        go n@(Lower _)
+          | n `notElem` path = buildPaths n (cave:path) caveMap pt2
+          | pt2 = buildPaths n (cave:path) caveMap False
+          | otherwise = []
+        go n@(Upper _) = buildPaths n (cave:path) caveMap pt2
+     in concat $ map go (caveMap Map.! cave)
+
+solve :: String -> String
+solve input = let corridors = map (splitOn "-") $ lines input
+                  caves = Set.toList $ Set.fromList $ concat corridors
+                  caveMap = Map.fromList $ caveMapList where
+                      caveMapList = zip (map node caves) (map getCorridors caves)
+                      getCorridors = (\cave -> [node (if s == cave then d else s) |
+                                                corridor@[s,d] <- corridors,
+                                                cave `elem` corridor])
+                  paths1 = buildPaths Start [] caveMap False
+                  paths2 = buildPaths Start [] caveMap True
+               in "Part 1: " ++ show (length paths1) ++
+                "\nPart 2: " ++ show (length paths2)
 
