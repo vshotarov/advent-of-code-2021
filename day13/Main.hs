@@ -9,25 +9,17 @@ main = do
     args <- getArgs
     putStrLn $ solve $ head args
 
-foldPaper :: [(Int,Int)] -> (Char,Int) -> [(Int,Int)]
-foldPaper points (axis,level) = let axisF = if axis == 'x' then fst else snd
-                                    below = filter ((level>) . axisF) points
-                                    above = filter ((level<) . axisF)  points
-                                    maxInAxis = maximum $ map axisF points
-                                    offset = (maxInAxis-level)-level
-                                    foldX = (map (\(x,y) -> (x+offset,y)) below) ++
-                                            (map (\(x,y) -> (2*level-x,y)) above)
-                                    foldY = (map (\(x,y) -> (x,y+offset)) below) ++
-                                            (map (\(x,y) -> (x,2*level-y)) above)
-                                 in if axis == 'x' then foldX else foldY
+foldOne :: (Char,Int) -> (Int,Int) -> (Int,Int)
+foldOne ('x',level) (x,y) = if x < level then (x,y) else (2*level-x,y)
+foldOne (_,level) (x,y) = if y < level then (x,y) else (x,2*level-y)
 
 draw :: [(Int,Int)] -> String
-draw points = let (xs,ys) = unzip points
-                  (minX,maxX) = (minimum xs, maximum xs)
-                  (minY,maxY) = (minimum ys, maximum ys)
-                  mapRow = (\y -> map (\x -> if (x,y) `elem` points
-                                                then '#' else '.') [minX..maxX])
-           in "\n" ++ (concat $ map (\x -> x ++ "\n") $ map mapRow [minY..maxY])
+draw points = "\n"++[charAt (x,y) | y <- [minY..maxY], x <- [minX..maxX+1]]
+    where (xs, ys) = unzip points
+          (minX,maxX) = (minimum xs, maximum xs)
+          (minY,maxY) = (minimum ys, maximum ys)
+          charAt (x,_) | x==maxX+1 = '\n'
+          charAt (x,y) = if (x,y) `elem` points then '#' else '.'
 
 solve :: String -> String
 solve input = let inputLines = lines input
@@ -35,7 +27,7 @@ solve input = let inputLines = lines input
                   coords = map (\row -> let [x,y] = splitOn "," row
                                          in (read x, read y)) numbers
                   folds = map (\x -> (x!!11, (read $ (splitOn "=" x)!!1))) rawFolds
-                  pt1 = length . Set.fromList $ foldPaper coords $ head folds
-                  pt2 = foldl foldPaper coords folds
+                  pt1 = length . Set.fromList $ (foldOne $ head folds) <$> coords
+                  pt2 = foldl (\acc fold -> (foldOne fold) <$> acc) coords folds
                in "Part 1: " ++ show pt1 ++ "\nPart 2: " ++ (draw $ pt2)
 
