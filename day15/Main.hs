@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wall #-}
 module Main where
 
 import System.Environment
@@ -21,36 +22,28 @@ parseInput input = let toInt x = (ord x) - 48
                                       [0..w-1]) [0..w-1]
                     in (Map.fromList $ concat asTuples, w)
 
-djikstra :: [Point] -> Grid -> Grid -> Int -> Int -> Grid
-djikstra [] _ costs _ _ = costs
-djikstra explore grid costs w m =
-    let isValid (tx,ty) = (tx>=0)&&(tx<w*m)&&(ty>=0)&&(ty<w*m)
-        manhattan (x,y) (a,b) = (abs (x-a)) + (abs (y-b))
-        getRisk (x,y) = let baseVal = grid Map.! (x `mod` w,y `mod` w)
-                            totalVal = baseVal + (x `div` w) + (y `div` w)
-                         in if totalVal <= 9 then totalVal else totalVal `mod` 9
-        getCost (x,y) = case Map.lookup (x,y) costs of
-                          Nothing -> 1000000
-                          Just cost -> cost
-        to = ((w*m)-1,(w*m)-1)
-        sorted = sortBy (\a b -> compare (manhattan b to) (manhattan a to)) explore
-        current = head sorted
-        neighbours (x,y) = [(x-1,y),(x+1,y),(x,y-1),(x,y+1)]
-        ns = filter isValid $ neighbours current
-        nsToUpdate = filter (\n -> (getCost current + getRisk n) < getCost n) ns
-        newCosts = foldl (\acc (x,y) -> Map.insert (x,y) (getCost current + getRisk (x,y)) acc)
-                         costs nsToUpdate
-     in djikstra ((tail sorted)++nsToUpdate) grid newCosts w m
-
-getLowestCost :: Grid -> Int -> Int -> Int
-getLowestCost grid w m = let costs = Map.singleton (0,0) 0
-                             updatedCosts = djikstra [(0,0)] grid costs w m
-                          in updatedCosts Map.! (w*m-1,w*m-1)
+djikstra :: Int -> Grid -> Grid -> [Point] -> Grid
+djikstra _ _ cost [] = cost 
+djikstra size grid cost queue =
+    let ((px,py):remainder) = sortBy (\a b -> compare (mh a) (mh b)) queue
+            where mh (x,y) = x+y
+        isOnGrid (x,y) = (x>=0)&&(x<(size*5))&&(y>=0)&&(y<(size*5))
+        neighbours = filter isOnGrid [(px+1,py),(px-1,py),(px,py+1),(px,py-1)]
+        getRisk (x,y) = let base = grid Map.! (x `mod` size, y `mod` size)
+                            total = base + (x `div` size) + (y `div` size)
+                         in if total <= 9 then total else (total `mod` 9)
+        getCost pt = case Map.lookup pt cost of
+                       Nothing -> 1000000
+                       Just c -> c
+        tentativeCost pt = (getCost (px,py)) + (getRisk pt)
+        toExplore = filter (\n -> tentativeCost n < getCost n) neighbours
+        newCost = foldl (\acc n -> Map.insert n (tentativeCost n) acc)
+                        cost toExplore
+     in djikstra size grid newCost (remainder++toExplore)
 
 solve :: String -> String
-solve input = let (grid,gridSize) = parseInput input
-                  pt1 = getLowestCost grid gridSize 1
-                  pt2 = getLowestCost grid gridSize 5
-               in "Part 1: " ++ (show pt1) ++
-                "\nPart 2: " ++ (show pt2)
+solve input = let (grid,size) = parseInput input
+                  cost = djikstra size grid (Map.singleton (0,0) 0) [(0,0)]
+               in "Part 1: " ++ show (cost Map.! (size-1,size-1)) ++
+                "\nPart 2: " ++ show (cost Map.! ((size*5)-1,(size*5)-1))
 
