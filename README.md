@@ -25,11 +25,9 @@ which will:
 
 *NOTE: The day_num will be zero padded, so 3 will become 03*
 
-After, that to solve any day, use `cabal run` like so:
+After, that to solve any day, use `./run_day.sh {day} {input_file}` like so:
 
-<code>cabal run day{day_num} "\`cat {input_file}\`"</code>
-
-e.g.
-
-<code>cabal run day03 "\`cat day03/example_input.txt\`"</code>
+```
+./run.sh 15 day15/example_input.txt
+```
 
